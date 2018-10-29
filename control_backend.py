@@ -3,11 +3,18 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 
+device_setup = {
+    "crazyMode": False,
+    "intervalMode": "meters",
+    "interval": 10
+}
 
 datasets = [
 ]
 
 selected_dataset = None
+
+measurement_running = False
 
 
 class ControlBackend(ABC):
@@ -35,6 +42,15 @@ class ControlBackend(ABC):
         @self.socketio.on("get_datasets")
         def handle_get_datasets():
             emit("update_datasets", datasets)
+
+        @self.socketio.on("change_measurement_running")
+        def handle_start_measurement(value):
+            measurement_running = value
+            emit("update_measurement_running", measurement_running, broadcast=True)
+
+        @self.socketio.on("get_device_setup")
+        def handle_get_device_setup():
+            emit("update_device_setup", device_setup)
 
         @self.socketio.on("select_dataset")
         def handle_select_dataset(selected):
