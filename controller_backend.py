@@ -10,6 +10,10 @@ device_setup = {
 }
 
 datasets = [
+    {
+        "id": 0,
+        "name": "Neustadt"
+    }
 ]
 
 selected_dataset = None
@@ -17,7 +21,7 @@ selected_dataset = None
 measurement_running = False
 
 
-class ControlBackend(ABC):
+class ControllerBackend(ABC):
     app = None
     socketio = None
 
@@ -81,8 +85,3 @@ class ControlBackend(ABC):
     @abstractmethod
     def get_device_info():
         pass
-
-
-
-if __name__ == "__main__":
-    control_backend = ControlBackend()

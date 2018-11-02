@@ -1,6 +1,6 @@
-from control_backend import ControlBackend
+from controller_backend import ControllerBackend
 
-class MockControl(ControlBackend):
+class ExampleController(ControllerBackend):
 
     def get_device_info(self):
         return {
@@ -20,6 +20,6 @@ class MockControl(ControlBackend):
     def get_sample(self):
         pass
 
-
-control = MockControl()
-control.run()
+if (__name__ == "__main__"):
+    controller = ExampleController()
+    controller.run()
