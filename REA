@@ -1,0 +1,20 @@
+# Controller-Backend
+
+
+## Datenbank
+
+Anforderungen:
+
+- Lokal (Kein Server-Host Datenbanksystem)
+- Schneller Lesezugriff (Andernfalls spürbare Verzögerung im Frontend)
+- Keine kritischen Anforderungen an Schnelligkeit bei Schreibzugriff
+- Austauschformat (Daten können als in sich geschlossene Dateien weitergegeben werden)
+- Keine kritischen Anforderungen an Speicherverbrauch
+
+Optionen:
+
+Aus diesen Anforderungen scheinen das Datenbanksystem SQLite3 sowie das Datenformat HDF5 am geeignetsten.
+
+In der ITU Empfehlung [ITU-R SM.2117-0](https://www.itu.int/dms_pubrec/itu-r/rec/sm/R-REC-SM.2117-0-201809-I!!PDF-E.pdf) (Data format definition for exchanging stored I/Q data for the purpose of spectrum monitoring) wird ein Format zur speicherung in HDF5 Dateien vorgestellt. Hier können sicher einige Ideen übernommen werden, jedoch bezieht sich das vorgestellte Format auf die Speicherung von I/Q Samples an einem fixen Ort.
+
+
