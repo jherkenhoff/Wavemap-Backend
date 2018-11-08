@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
+import threading
 
 device_setup = {
     "crazyMode": False,
@@ -19,7 +20,6 @@ datasets = [
 selected_dataset = None
 
 measurement_running = False
-
 
 class ControllerBackend(ABC):
     app = None
@@ -48,9 +48,14 @@ class ControllerBackend(ABC):
             emit("update_datasets", datasets)
 
         @self.socketio.on("change_measurement_running")
-        def handle_start_measurement(value):
+        def handle_change_measurement_running(value):
             measurement_running = value
             emit("update_measurement_running", measurement_running, broadcast=True)
+            self._start_continuous_sampling()
+
+        @self.socketio.on("start_single_sample")
+        def handle_start_single_sample():
+            self._start_single_sample()
 
         @self.socketio.on("get_device_setup")
         def handle_get_device_setup():
@@ -82,6 +87,31 @@ class ControllerBackend(ABC):
     def run(self):
         self.socketio.run(self.app, host="0.0.0.0")
 
+
+    def _start_single_sample(self):
+        sample = {
+            "id": 0,
+            "time": "22:57:53",
+            "rf_power": -82,
+            "spectrum": self.get_spectrum(),
+            "location": self.get_location()
+        }
+        emit("new_sample", sample, broadcast=True)
+
+    def _start_continuous_sampling(self):
+        print("Continuous Sample!!!!!!!!!!!!!!!!!!!")
+
+    def _stop_contiuous_sampling(self):
+        print("Stop Continuous Sample!!!!!!!!!!!!!!!!!!!")
+
     @abstractmethod
-    def get_device_info():
+    def get_device_info(self):
+        pass
+
+    @abstractmethod
+    def get_location(self):
+        pass
+
+    @abstractmethod
+    def get_spectrum(self):
         pass
