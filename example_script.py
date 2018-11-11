@@ -1,7 +1,9 @@
-from controller_backend import ControllerBackend
+from measurement_script import MeasurementScript
+from live_server import LiveServer
 import random
+import numpy as np
 
-class ExampleController(ControllerBackend):
+class ExampleScript(MeasurementScript):
 
     def get_device_info(self):
         return {
@@ -9,9 +11,7 @@ class ExampleController(ControllerBackend):
             "version": "1.8",
             "method": "FFT + Maxhold",
             "gps_support": False,
-            "frequency_bins": [50e6, 60e6, 70e6],
-            "custom_fileds": {
-            }
+            "frequency_bins": np.logspace(6, 9, 1024).tolist()
         }
 
     def get_location(self):
@@ -25,8 +25,10 @@ class ExampleController(ControllerBackend):
         }
 
     def get_spectrum(self):
-        return [-90, -80, -91]
+        return [random.gauss(-130, 5) for i in range(len(self.get_device_info()["frequency_bins"]))]
+
 
 if (__name__ == "__main__"):
-    controller = ExampleController()
-    controller.run()
+    script = ExampleScript()
+    server = LiveServer(script)
+    server.run()
