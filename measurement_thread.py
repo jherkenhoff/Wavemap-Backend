@@ -7,11 +7,11 @@ class MeasurementMode(Enum):
     CONTINUOUS = 2
 
 class MeasurementThread(Thread):
-    def __init__(self, emit, measurement_script):
+    def __init__(self, emit, measurement_controller):
         super().__init__()
 
         self.__emit = emit
-        self.__measurement_script = measurement_script
+        self.__measurement_controller = measurement_controller
 
         # Initialize internal state
         self.__mode = MeasurementMode.SINGLE
@@ -39,8 +39,8 @@ class MeasurementThread(Thread):
                     "id": 0,
                     "time": "22:57:53",
                     "rf_power": -82,
-                    "spectrum": self.__measurement_script.get_spectrum(),
-                    "location": self.__measurement_script.get_location()
+                    "spectrum": self.__measurement_controller.get_spectrum(),
+                    "location": self.__measurement_controller.get_location()
                 }
                 self.__emit("new_sample", sample, broadcast=True)
                 self.__run_event.clear()
@@ -49,8 +49,8 @@ class MeasurementThread(Thread):
                     "id": 0,
                     "time": "22:57:53",
                     "rf_power": -82,
-                    "spectrum": self.__measurement_script.get_spectrum(),
-                    "location": self.__measurement_script.get_location()
+                    "spectrum": self.__measurement_controller.get_spectrum(),
+                    "location": self.__measurement_controller.get_location()
                 }
                 self.__emit("new_sample", sample, broadcast=True)
                 time.sleep(self.__delay)

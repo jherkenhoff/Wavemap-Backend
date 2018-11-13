@@ -1,9 +1,9 @@
-from measurement_script import MeasurementScript
+from measurement_controller import MeasurementController
 from live_server import LiveServer
 import random
 import numpy as np
 
-class ExampleScript(MeasurementScript):
+class ExampleController(MeasurementController):
 
     def get_device_info(self):
         return {
@@ -29,6 +29,6 @@ class ExampleScript(MeasurementScript):
 
 
 if (__name__ == "__main__"):
-    script = ExampleScript()
-    server = LiveServer(script)
+    controller = ExampleController()
+    server = LiveServer(controller)
     server.run()
