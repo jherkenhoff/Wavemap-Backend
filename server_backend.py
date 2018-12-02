@@ -1,6 +1,7 @@
 from flask import Flask
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from flask_cors import CORS
+import numpy as np
 from data_backend import Dataset as HDF_Dataset
 from dataset_manager import DatasetManager
 
@@ -30,11 +31,12 @@ for dset_index, name in enumerate(dataset_manager.get_dataset_names()):
     })
     dset.close()
 
-print(dataset_list)
-
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
+
+parser = reqparse.RequestParser()
+parser.add_argument("preprocessor", required=True)
 
 class DatasetList(Resource):
     def get(self):
@@ -57,7 +59,28 @@ class SampleList(Resource):
         dset_name = dataset_list[int(dataset_id)]["name"]
         subset_name = dataset_list[int(dataset_id)]["subsets"][int(subset_id)]["name"]
         dataset = HDF_Dataset(DATASET_PATH, dataset_list[int(dataset_id)]["name"])
-        return "Noch nicht implementiert"
+        freq_bins = dataset[subset_name].attrs["freq_bins"]
+        return [{
+            "id": i,
+            "lat": sample["lat"],
+            "lon": sample["lon"],
+            "spectrum": [{"freq": freq_bins[j], "mag": mag} for j, mag in enumerate(sample["spectrum"])]
+        } for i, sample in enumerate(dataset[subset_name])]
+
+
+class Sample(Resource):
+    def get(self, dataset_id, subset_id, sample_id):
+        dset_name = dataset_list[int(dataset_id)]["name"]
+        subset_name = dataset_list[int(dataset_id)]["subsets"][int(subset_id)]["name"]
+        dataset = HDF_Dataset(DATASET_PATH, dataset_list[int(dataset_id)]["name"])
+        freq_bins = dataset[subset_name].attrs["freq_bins"]
+        sample = dataset[subset_name][sample_id]
+        return {
+            "id": sample_id,
+            "lat": sample["lat"],
+            "lon": sample["lon"],
+            "spectrum": [{"freq": freq_bins[j], "mag": mag} for j, mag in enumerate(sample["spectrum"])]
+        }
 
 class PreprocessedSampleList(Resource):
     def get(self, dataset_id, subset_id):
@@ -65,17 +88,24 @@ class PreprocessedSampleList(Resource):
         subset_name = dataset_list[int(dataset_id)]["subsets"][int(subset_id)]["name"]
         dataset = HDF_Dataset(DATASET_PATH, dataset_list[int(dataset_id)]["name"])
 
-        return [{
-            "id": i,
-            "lat": sample["lat"],
-            "lon": sample["lon"]
-        } for i, sample in enumerate(dataset[subset_name])]
+        args = parser.parse_args()
+
+        if args["preprocessor"] == "average":
+            return [{
+                "id": i,
+                "lat": sample["lat"],
+                "lon": sample["lon"],
+                "value": sample["spectrum"].mean()
+            } for i, sample in enumerate(dataset[subset_name])]
+        else:
+            print("Not supported")
 
 api.add_resource(DatasetList, API_BASE_STR +"/datasets")
 api.add_resource(Dataset,     API_BASE_STR + "/datasets/<dataset_id>")
 api.add_resource(SubsetList,  API_BASE_STR + "/datasets/<dataset_id>/subsets/")
 api.add_resource(Subset,      API_BASE_STR + "/datasets/<dataset_id>/subsets/<subset_id>")
 api.add_resource(SampleList,  API_BASE_STR + "/datasets/<dataset_id>/subsets/<subset_id>/samples")
+api.add_resource(Sample,      API_BASE_STR + "/datasets/<dataset_id>/subsets/<subset_id>/samples/<int:sample_id>")
 api.add_resource(PreprocessedSampleList,  API_BASE_STR + "/datasets/<dataset_id>/subsets/<subset_id>/preprocessed")
 
 if __name__ == "__main__":

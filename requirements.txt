@@ -2,3 +2,4 @@ numpy
 -e git+https://dl0ht.fk4.hs-bremen.de/git/jherkenhoff/Data-Backend.git#egg=data_backend
 flask
 flask_restful
+flask_cors
