@@ -73,13 +73,13 @@ class Sample(Resource):
         dset_name = dataset_list[int(dataset_id)]["name"]
         subset_name = dataset_list[int(dataset_id)]["subsets"][int(subset_id)]["name"]
         dataset = HDF_Dataset(DATASET_PATH, dataset_list[int(dataset_id)]["name"])
-        freq_bins = dataset[subset_name].attrs["freq_bins"]
-        sample = dataset[subset_name][sample_id]
+        freq_bins = dataset[subset_name].freq_bins
+        subset = dataset[subset_name]
         return {
             "id": sample_id,
-            "lat": sample["lat"],
-            "lon": sample["lon"],
-            "spectrum": [{"freq": freq_bins[j], "mag": mag} for j, mag in enumerate(sample["spectrum"])]
+            "lat": subset.meta[sample_id]["lat"],
+            "lon": subset.meta[sample_id]["lon"],
+            "spectrum": [{"freq": freq_bins[j], "mag": mag} for j, mag in enumerate(subset.spectrum[sample_id])]
         }
 
 class PreprocessedSampleList(Resource):
@@ -90,13 +90,15 @@ class PreprocessedSampleList(Resource):
 
         args = parser.parse_args()
 
+        values = dataset[subset_name].spectrum[:].mean(1)
+
         if args["preprocessor"] == "average":
             return [{
                 "id": i,
-                "lat": sample["lat"],
-                "lon": sample["lon"],
-                "value": sample["spectrum"].mean()
-            } for i, sample in enumerate(dataset[subset_name])]
+                "lat": meta["lat"],
+                "lon": meta["lon"],
+                "value": spectrum.mean()
+            } for i, (meta, spectrum) in enumerate(zip(dataset[subset_name].meta, dataset[subset_name].spectrum))]
         else:
             print("Not supported")
 
