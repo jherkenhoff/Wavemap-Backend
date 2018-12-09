@@ -79,6 +79,8 @@ class Sample(Resource):
             "id": sample_id,
             "lat": subset.meta[sample_id]["lat"],
             "lon": subset.meta[sample_id]["lon"],
+            "speed": np.float64(subset.meta[sample_id]["speed"]),
+            "sats": np.float64(subset.meta[sample_id]["sats"]),
             "spectrum": [{"freq": freq_bins[j], "mag": mag} for j, mag in enumerate(subset.spectrum[sample_id])]
         }
 
