@@ -4,6 +4,7 @@ from flask_cors import CORS
 import numpy as np
 from data_backend import Dataset as HDF_Dataset
 from dataset_manager import DatasetManager
+from utils import merge_overlapping_filters
 
 DATASET_PATH = "./datasets"
 dataset_manager = DatasetManager(DATASET_PATH)
@@ -24,6 +25,7 @@ for dset_index, name in enumerate(dataset_manager.get_dataset_names()):
                 "id": subset_index,
                 "name": subset,
                 "length": dset[subset].len(),
+                "freqBins": dset[subset].freq_bins[:].tolist(),
                 "link": API_BASE_STR + "/datasets/" + str(dset_index) + "/subsets/" + str(subset_index)
             } for subset_index, subset in enumerate(dset)
         ],
@@ -31,12 +33,14 @@ for dset_index, name in enumerate(dataset_manager.get_dataset_names()):
     })
     dset.close()
 
+
 app = Flask(__name__)
 CORS(app)
 api = Api(app)
 
 parser = reqparse.RequestParser()
-parser.add_argument("preprocessor", required=True)
+parser.add_argument("preprocessor", type=str, required=True)
+parser.add_argument("filter", type=str, required=False, action="append")
 
 class DatasetList(Resource):
     def get(self):
@@ -81,6 +85,7 @@ class Sample(Resource):
             "lon": subset.meta[sample_id]["lon"],
             "speed": np.float64(subset.meta[sample_id]["speed"]),
             "sats": np.float64(subset.meta[sample_id]["sats"]),
+            "time": int(subset.meta[sample_id]["time"]),
             "spectrum": [{"freq": freq_bins[j], "mag": mag} for j, mag in enumerate(subset.spectrum[sample_id])]
         }
 
@@ -92,17 +97,43 @@ class PreprocessedSampleList(Resource):
 
         args = parser.parse_args()
 
-        values = dataset[subset_name].spectrum[:].mean(1)
+        # Select preprocessor:
+        if (args["preprocessor"] == "average"):
+            preprocessor = lambda spectrum: spectrum.mean()
+        elif (args["preprocessor"] == "max"):
+            preprocessor = lambda spectrum: spectrum.max()
+        elif (args["preprocessor"] == "min"):
+            preprocessor = lambda spectrum: spectrum.min()
+        else:
+            return "Preprocessor not supported!"
 
-        if args["preprocessor"] == "average":
+        if (args["filter"] == None):
             return [{
                 "id": i,
                 "lat": meta["lat"],
                 "lon": meta["lon"],
-                "value": spectrum.mean()
+                "value": preprocessor(spectrum)
             } for i, (meta, spectrum) in enumerate(zip(dataset[subset_name].meta, dataset[subset_name].spectrum))]
         else:
-            print("Not supported")
+            filters = []
+            for filter in args["filter"]:
+                (min, max) = filter.split(":")
+                filters.append( (int(min), int(max)) )
+
+            filters = merge_overlapping_filters(filters)
+
+            indices = []
+            for filter in filters:
+                indices = np.concatenate( (indices, np.arange(filter[0], filter[1]+1)) )
+            return [{
+                "id": i,
+                "lat": meta["lat"],
+                "lon": meta["lon"],
+                "value": preprocessor(spectrum)
+            } for i, (meta, spectrum) in enumerate(zip(dataset[subset_name].meta, dataset[subset_name].spectrum[:,indices]))]
+
+
+
 
 api.add_resource(DatasetList, API_BASE_STR +"/datasets")
 api.add_resource(Dataset,     API_BASE_STR + "/datasets/<dataset_id>")
