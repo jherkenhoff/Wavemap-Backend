@@ -32,7 +32,7 @@ for dset_index, name in enumerate(dataset_manager.get_dataset_names()):
                 "length": dset[subset].len(),
                 "freqBins": dset[subset].freq_bins[:].tolist(),
                 "link": API_BASE_STR + "/datasets/" + str(dset_index) + "/subsets/" + str(subset_index),
-                "thumbnail": "http://localhost:5000" + API_BASE_STR + "/datasets/" + str(dset_index) + "/subsets/" + str(subset_index) + "/thumbnail",
+                "thumbnail": API_BASE_STR + "/datasets/" + str(dset_index) + "/subsets/" + str(subset_index) + "/thumbnail",
             } for subset_index, subset in enumerate(dset)
         ],
         "link": API_BASE_STR + "/datasets/" + str(dset_index),
